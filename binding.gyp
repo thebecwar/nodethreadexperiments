@@ -9,10 +9,10 @@
     },
     'targets': [
         {
-            'target_name': 'libuvwrap',
-            #'type': 'shared_library',
-            'include_dirs': [ 'libuv/include' ],
+            'target_name': 'experiments',
+            'include_dirs': [ 'libuv/include', 'threadpool/include' ],
             'sources': [
+                # libuv wrapper classes
                 'libuv/src/UVAsync.cc',
                 'libuv/src/UVBarrier.cc',
                 'libuv/src/UVCondition.cc',
@@ -22,7 +22,16 @@
                 'libuv/src/UVSemaphore.cc',
                 'libuv/src/UVThread.cc',
                 'libuv/src/UVTimer.cc',
-                'libuv/src/UVTls.cc'],
+                'libuv/src/UVTls.cc',
+                
+                # threadpool classes
+                'threadpool/src/ThreadPool.cc',
+                'threadpool/src/JsWorkerThread.cc',
+                'threadpool/src/JsWorkItem.cc',
+                
+                # main export class
+                'src/main.cc',
+                ],
         }
     ]
 }
