@@ -4,15 +4,24 @@ namespace libuv
 {
 namespace threading 
 {
-UVThread::UVThread(UVThreadCallback threadProc, void* arg) : m_handle(), m_arg(arg), m_callback(threadProc)
+
+UVThread::UVThread() : m_handle(), m_callback(nullptr)
 {
-    int err = uv_thread_create(&this->m_handle, m_callback, m_arg);
+	int err = uv_thread_create(&this->m_handle, UVThread::CallbackThunk, this);
+	if (err < 0)
+	{
+		// todo: error handling
+	}
+}
+UVThread::UVThread(UVThreadCallback* threadProc) : m_handle(), m_callback(threadProc)
+{
+    int err = uv_thread_create(&this->m_handle, UVThread::CallbackThunk, this);
     if (err < 0)
     {
         // todo: error handling
     }
 }
-UVThread::UVThread(const uv_thread_t& thread) : m_handle(), m_arg(NULL), m_callback(nullptr)
+UVThread::UVThread(const uv_thread_t& thread) : m_handle(), m_callback(nullptr)
 {
     memcpy(&this->m_handle, &thread, sizeof(uv_thread_t));
 }
@@ -33,13 +42,22 @@ int UVThread::Equal(UVThread& other)
     return uv_thread_equal(&this->m_handle, &(other.m_handle));
 }
 
-void* UVThread::GetThreadData()
-{
-    return this->m_arg;
-}
-UVThreadCallback UVThread::GetCallback()
+UVThreadCallback* UVThread::GetCallback()
 {
     return this->m_callback;
+}
+void UVThread::Callback()
+{
+	if (this->m_callback)
+	{
+		this->m_callback->ThreadProc(this);
+	}
+}
+
+void UVThread::CallbackThunk(void* arg)
+{
+	UVThread* self = reinterpret_cast<UVThread*>(arg);
+	self->Callback();
 }
 
 UVTls & UVThread::Tls()

@@ -15,15 +15,18 @@ namespace threadpool
 		// Prototype Methods
 		static void Init(v8::Local<v8::Object> exports);
 		static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static bool TypeCheck(v8::Local<v8::Value>& other);
 
 		// JS Instance Methods
 		static void RunSync(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 		// JS Properties
 		static void GetScript(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info);
+		static void GetResult(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info);
 
 	private:
 		static v8::Persistent<v8::Function> constructor;
+		static v8::Persistent<v8::FunctionTemplate> JsWorkItem::tmplt;
 
 	// Internal Methods
 	public:
@@ -36,6 +39,7 @@ namespace threadpool
 		bool Compile(v8::Local<v8::Context>& context);
 
 		std::string m_script;
+		std::string m_result;
 		std::map<v8::Isolate*, v8::Persistent<v8::Script>> m_compiledScripts;
 	};
 }

@@ -10,7 +10,7 @@
     'targets': [
         {
             'target_name': 'experiments',
-            'include_dirs': [ 'libuv/include', 'threadpool/include' ],
+            'include_dirs': [ 'libuv/include', 'threadpool/include', 'include' ],
             'sources': [
                 # libuv wrapper classes
                 'libuv/src/UVAsync.cc',
@@ -29,8 +29,9 @@
                 'threadpool/src/JsWorkerThread.cc',
                 'threadpool/src/JsWorkItem.cc',
                 
-                # main export class
+                # Shared & Initialization
                 'src/main.cc',
+                'src/helpers.cc',
                 ],
         }
     ]

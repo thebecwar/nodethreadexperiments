@@ -6,23 +6,25 @@ namespace threadpool
 	using namespace v8;
 
 	// Static members
-	v8::Persistent<v8::Function> JsWorkItem::constructor;
+	Persistent<Function> JsWorkItem::constructor;
+	Persistent<FunctionTemplate> JsWorkItem::tmplt;
 
 	void JsWorkItem::Init(Local<Object> exports)
 	{
 		Isolate* isolate = exports->GetIsolate();
 
-		Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, JsWorkItem::New);
+		Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
 		tpl->SetClassName(String::NewFromUtf8(isolate, "JsWorkItem"));
 		tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-		NODE_SET_PROTOTYPE_METHOD(tpl, "runSync", JsWorkItem::RunSync);
+		NODE_SET_PROTOTYPE_METHOD(tpl, "runSync", RunSync);
 
 		tpl->InstanceTemplate()->SetAccessor(
 			String::NewFromUtf8(isolate, "script"),
-			JsWorkItem::GetScript);
+			GetScript);
 
-		JsWorkItem::constructor.Reset(isolate, tpl->GetFunction());
+		tmplt.Reset(isolate, tpl);
+		constructor.Reset(isolate, tpl->GetFunction());
 		exports->Set(String::NewFromUtf8(isolate, "JsWorkItem"), tpl->GetFunction());
 	}
 	void JsWorkItem::New(const FunctionCallbackInfo<Value>& args)
@@ -52,7 +54,7 @@ namespace threadpool
 	void JsWorkItem::RunSync(const FunctionCallbackInfo<Value>& args)
 	{
 		Local<Context> context = args.GetIsolate()->GetCurrentContext();
-		JsWorkItem* self = ObjectWrap::Unwrap<JsWorkItem>(args.Holder());
+		JsWorkItem* self = Unwrap<JsWorkItem>(args.Holder());
 		Local<Value> result = self->Execute(context);
 		args.GetReturnValue().Set(result);
 	}
@@ -60,10 +62,24 @@ namespace threadpool
 	// JS Properties
 	void JsWorkItem::GetScript(Local<String> property, const PropertyCallbackInfo<Value>& info)
 	{
-		JsWorkItem* self = ObjectWrap::Unwrap<JsWorkItem>(info.Holder());
+		JsWorkItem* self = Unwrap<JsWorkItem>(info.Holder());
 		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), self->m_script.c_str()));
 	}
-	
+	void JsWorkItem::GetResult(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info)
+	{
+		JsWorkItem* self = Unwrap<JsWorkItem>(info.Holder());
+		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), self->m_result.c_str()));
+	}
+
+	bool JsWorkItem::TypeCheck(Local<Value>& other)
+	{
+		Isolate* isolate = Isolate::GetCurrent();
+		if (isolate == nullptr)
+			return false;
+		auto t = tmplt.Get(Isolate::GetCurrent());
+		return t->HasInstance(other);
+	}
+
 	// Internal Instance Methods
 	JsWorkItem::JsWorkItem(std::string& script) : m_script(script)
 	{
@@ -81,6 +97,10 @@ namespace threadpool
 
 		Local<Script> script = this->m_compiledScripts[isolate].Get(isolate);
 		Local<Value> result = script->Run(context).ToLocalChecked();
+
+		Local<String> serializedResult = JSON::Stringify(context, result->ToObject()).ToLocalChecked();
+		String::Utf8Value tmp(serializedResult);
+		this->m_result = std::string(*tmp);
 
 		return result;
 	}

@@ -9,12 +9,13 @@ namespace libuv
 {
 namespace threading
 {
-    typedef void (*UVThreadCallback)(void* arg);
-    
+	class UVThreadCallback;
+	
     class UVThread
     {
     public:
-        UVThread(UVThreadCallback threadProc, void* arg);
+		UVThread();
+        UVThread(UVThreadCallback* threadProc);
         ~UVThread();
         
         static UVThread* Self();
@@ -22,19 +23,28 @@ namespace threading
         int Equal(UVThread& other);
         
 		void* GetThreadData();
-		UVThreadCallback GetCallback();
+		UVThreadCallback* GetCallback();
 		UVTls& Tls();
 
+    protected:
+		virtual void Callback();
+
     private:
-        UVThread() = delete;
         UVThread(const UVThread&) = delete;
         UVThread(const ::uv_thread_t& thread);
 
+		static void CallbackThunk(void* arg);
+
 		UVTls m_tls;
         uv_thread_t m_handle;
-        void* m_arg;
-        UVThreadCallback m_callback;
+        UVThreadCallback* m_callback;
 
+	};
+
+	class UVThreadCallback
+	{
+	public:
+		virtual void ThreadProc(UVThread* thread) = 0;
 	};
 }
 }
