@@ -29,9 +29,13 @@ void libuv::threading::UVMutex::Unlock()
 	uv_mutex_unlock(&this->m_mutex);
 }
 
+//uv_mutex_t* libuv::threading::UVMutex::Get()
+//{
+//	return &this->m_mutex;
+//}
 uv_mutex_t* libuv::threading::UVMutex::operator&()
 {
-	return &this->m_mutex;
+    return &this->m_mutex;
 }
 
 libuv::threading::UVLock::UVLock(UVMutex& mutex) : m_mutex(mutex)

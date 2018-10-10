@@ -19,10 +19,12 @@ namespace threadpool
 
 		// JS Instance Methods
 		static void RunSync(const v8::FunctionCallbackInfo<v8::Value>& args);
+        static void DeserializeResult(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 		// JS Properties
 		static void GetScript(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info);
-		static void GetResult(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info);
+		static void GetSerializedResult(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info);
+        
 
 	private:
 		static v8::Persistent<v8::Function> constructor;
@@ -34,13 +36,17 @@ namespace threadpool
 		~JsWorkItem() = default;
 
 		v8::Local<v8::Value> Execute(v8::Local<v8::Context>& context);
+        void ExecuteCallback(v8::Isolate* isolate);
 
 	private:
 		bool Compile(v8::Local<v8::Context>& context);
 
 		std::string m_script;
 		std::string m_result;
-		std::map<v8::Isolate*, v8::Persistent<v8::Script>> m_compiledScripts;
+		std::map<v8::Isolate*, v8::Persistent<v8::Script, v8::CopyablePersistentTraits<v8::Script>>> m_compiledScripts;
+        v8::Persistent<v8::Function> m_callbackFunction;
+        std::vector<v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>>> m_callbackArgs;
+
 	};
 }
 

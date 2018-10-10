@@ -48,7 +48,8 @@ namespace threadpool
 		std::queue<JsWorkItem*> m_completedQueue;
 		libuv::callback::UVAsync m_async;
 		libuv::threading::UVThread m_dispatcher;
-		libuv::threading::UVMutex m_mutex;
+		libuv::threading::UVMutex m_workMutex;
+        libuv::threading::UVMutex m_doneMutex;
 		bool m_runDispatcher;
 	};
 }

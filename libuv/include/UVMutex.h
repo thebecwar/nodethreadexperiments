@@ -17,7 +17,8 @@ namespace threading
         int TryLock();
         void Unlock();
 
-    	uv_mutex_t* operator&();
+    	//uv_mutex_t* Get();
+        uv_mutex_t* operator&();
 
     private:
         uv_mutex_t m_mutex;
@@ -30,7 +31,7 @@ namespace threading
         ~UVLock();
 
     private:
-        UVMutex &m_mutex;
+        UVMutex& m_mutex;
     };
     
     

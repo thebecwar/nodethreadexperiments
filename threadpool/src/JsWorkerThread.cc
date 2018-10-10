@@ -23,7 +23,7 @@ namespace threadpool
 	}
 	bool JsWorkerThread::NeedsWork()
 	{
-		return this->m_current == nullptr && this->m_waiting;
+		return this->m_waiting;
 	}
 	std::string JsWorkerThread::GetSerializedResult()
 	{

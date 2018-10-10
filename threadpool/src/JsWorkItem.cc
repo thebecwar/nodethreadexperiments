@@ -18,10 +18,14 @@ namespace threadpool
 		tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 		NODE_SET_PROTOTYPE_METHOD(tpl, "runSync", RunSync);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "deserializeResult", DeserializeResult);
 
 		tpl->InstanceTemplate()->SetAccessor(
 			String::NewFromUtf8(isolate, "script"),
 			GetScript);
+        tpl->InstanceTemplate()->SetAccessor(
+            String::NewFromUtf8(isolate, "serializedResult"),
+            GetSerializedResult);
 
 		tmplt.Reset(isolate, tpl);
 		constructor.Reset(isolate, tpl->GetFunction());
@@ -46,6 +50,22 @@ namespace threadpool
 		std::string script(*val);
 
 		JsWorkItem* self = new JsWorkItem(script);
+
+        if (args.Length() > 1 && args[1]->IsFunction())
+        {
+            Local<Function> callback = Local<Function>::Cast(args[1]);
+            self->m_callbackFunction.Reset(isolate, callback);
+
+            if (args.Length() > 2)
+            {
+                for (int i = 0; i < args.Length() - 2; i++)
+                {
+                    self->m_callbackArgs.emplace_back(Persistent<Value>(isolate, args[i + 2]));
+                }
+            }
+
+        }
+
 		self->Wrap(args.This());
 		args.GetReturnValue().Set(args.This());
 	}
@@ -54,10 +74,18 @@ namespace threadpool
 	void JsWorkItem::RunSync(const FunctionCallbackInfo<Value>& args)
 	{
 		Local<Context> context = args.GetIsolate()->GetCurrentContext();
-		JsWorkItem* self = Unwrap<JsWorkItem>(args.Holder());
+		JsWorkItem* self = ObjectWrap::Unwrap<JsWorkItem>(args.Holder());
 		Local<Value> result = self->Execute(context);
 		args.GetReturnValue().Set(result);
 	}
+    void JsWorkItem::DeserializeResult(const FunctionCallbackInfo<Value>& args)
+    {
+        Isolate* isolate = args.GetIsolate();
+        JsWorkItem* self = ObjectWrap::Unwrap<JsWorkItem>(args.Holder());
+        Local<Value> result = JSON::Parse(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, self->m_result.c_str())).ToLocalChecked();
+        args.GetReturnValue().Set(result);
+    }
+
 
 	// JS Properties
 	void JsWorkItem::GetScript(Local<String> property, const PropertyCallbackInfo<Value>& info)
@@ -65,7 +93,7 @@ namespace threadpool
 		JsWorkItem* self = Unwrap<JsWorkItem>(info.Holder());
 		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), self->m_script.c_str()));
 	}
-	void JsWorkItem::GetResult(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info)
+	void JsWorkItem::GetSerializedResult(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info)
 	{
 		JsWorkItem* self = Unwrap<JsWorkItem>(info.Holder());
 		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), self->m_result.c_str()));
@@ -115,12 +143,35 @@ namespace threadpool
 			Local<String> source = String::NewFromUtf8(isolate, this->m_script.c_str());
 			Local<Script> script = Script::Compile(context, source).ToLocalChecked();
 
-			// todo: check for errors
-
-			//this->m_compiledScripts[isolate] = Persistent<Script>();
-			this->m_compiledScripts[isolate].Reset(isolate, script);
+            if (this->m_compiledScripts.find(isolate) != this->m_compiledScripts.end())
+            {
+                this->m_compiledScripts[isolate].Reset(isolate, script);
+            }
+            else
+            {
+                this->m_compiledScripts.emplace(isolate, Persistent<Script>(isolate, script));
+            }
 		}
 
 		return true;
 	}
+
+    void JsWorkItem::ExecuteCallback(v8::Isolate* isolate)
+    {
+        if (this->m_callbackFunction.IsEmpty()) return;
+
+        int argc = (int)this->m_callbackArgs.size();
+        if (argc == 0)
+        {
+            this->m_callbackFunction.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), 0, nullptr);
+        }
+        else
+        {
+            std::vector<Local<Value>> localArgs;
+            for (int i = 0; i < argc; i++)
+            {
+                localArgs.emplace_back(this->m_callbackArgs.at(i).Get(isolate));
+            }
+        }
+    }
 }
