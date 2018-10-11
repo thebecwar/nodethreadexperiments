@@ -10,7 +10,7 @@
     'targets': [
         {
             'target_name': 'experiments',
-            'include_dirs': [ 'libuv/include', 'threadpool/include', 'include' ],
+            'include_dirs': [ 'libuv/include', 'threadpool/include', 'sharedobj/include', 'include' ],
             'sources': [
                 # libuv wrapper classes
                 'libuv/src/UVAsync.cc',
@@ -28,6 +28,10 @@
                 'threadpool/src/ThreadPool.cc',
                 'threadpool/src/JsWorkerThread.cc',
                 'threadpool/src/JsWorkItem.cc',
+                
+                # Shared Object type
+                'sharedobj/src/Variant.cc',
+                'sharedobj/src/SharedObject.cc',
                 
                 # Shared & Initialization
                 'src/main.cc',
