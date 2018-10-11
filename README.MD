@@ -49,3 +49,9 @@ The basic process is:
 You can now run whatever JS code you want on your new isolate.
 
 To tear down, go in the opposite order of construction with two caveats. (If you started a block after creating the isolate, and are using RAII, the compiler will destruct the scope in the correct order.) First, once the scope is completely destroyed, call `Dispose()` on the isolate to free it's resources. Do not call delete on your own, you will cause issues.  Second, `delete` the `ArrayBuffer::Allocator*` you created in the params.
+
+### Handle scopes
+
+A handle scope is required before constructing a `v8::Local<>`. If you're calling into JS from within a callback registered with `uv_async_init`, you will need to create a `v8::HandleScope` using the isolate that you obtain from calling `v8::Isolate::GetCurrent()`. 
+
+

@@ -160,6 +160,8 @@ namespace threadpool
     {
         if (this->m_callbackFunction.IsEmpty()) return;
 
+		HandleScope handleScope(isolate);
+
         int argc = (int)this->m_callbackArgs.size();
         if (argc == 0)
         {
@@ -167,11 +169,14 @@ namespace threadpool
         }
         else
         {
-            std::vector<Local<Value>> localArgs;
+            std::vector<Local<Value>> localArgs(argc);
             for (int i = 0; i < argc; i++)
             {
-                localArgs.emplace_back(this->m_callbackArgs.at(i).Get(isolate));
+                localArgs[i] = this->m_callbackArgs[i].Get(isolate);
             }
+			this->m_callbackFunction.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), argc, &localArgs[0]);
         }
     }
+
+	
 }

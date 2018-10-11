@@ -126,6 +126,7 @@ namespace threadpool
                     {
                         UVLock completedLock(this->m_doneMutex);
                         this->m_completedQueue.push((*iter)->GetWorkItem());
+						(*iter)->Dispatch(nullptr);
                         this->m_async.Send();
                     }
 
@@ -144,6 +145,7 @@ namespace threadpool
     void ThreadPool::AsyncCall()
     {
         Isolate* isolate = Isolate::GetCurrent();
+		HandleScope handleScope(isolate);
 
         UVLock lock(this->m_doneMutex);
         while (this->m_completedQueue.size() > 0)
