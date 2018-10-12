@@ -30,14 +30,4 @@ namespace sharedobj
 
 }
 
-//namespace std {
-//	template<>
-//	struct less<sharedobj::ObjectKey>
-//	{
-//		bool operator()(const ObjectKey left, const ObjectKey right) const
-//		{
-//			return left.Get() < right.Get();
-//		}
-//	};
-//}
 #endif
