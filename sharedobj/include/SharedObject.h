@@ -17,7 +17,6 @@ namespace sharedobj
 	public:
 		static void Init(v8::Local<v8::Object> exports);
 		static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
-		static void NewRef(SharedObject* obj, v8::Isolate* targetIsolate);
 
 		static bool TypeCheck(v8::Local<v8::Value>& maybeSharedObject);
 
@@ -28,6 +27,15 @@ namespace sharedobj
 		static void Deleter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Boolean>& info);
 		static void Enumerator(const v8::PropertyCallbackInfo<v8::Array>& info);
 
+		// Common Methods
+		static void TryLockRead(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void LockRead(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void UnlockRead(const v8::FunctionCallbackInfo<v8::Value>& args);
+
+		static void TryLockWrite(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void LockWrite(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void UnlockWrite(const v8::FunctionCallbackInfo<v8::Value>& args);
+		
 
 	private:
 		static v8::Persistent<v8::Function> constructor;
@@ -41,6 +49,14 @@ namespace sharedobj
 
         int Attach();
         int Release();
+
+		bool TryLockRead();
+		void LockRead();
+		void UnlockRead();
+
+		bool TryLockWrite();
+		void LockWrite();
+		void UnlockWrite();
 
 	private:
 		std::map<ObjectKey, Variant> m_properties;

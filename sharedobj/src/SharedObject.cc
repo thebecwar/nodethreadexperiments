@@ -23,6 +23,13 @@ namespace sharedobj
         namedConfig.flags = PropertyHandlerFlags::kNone;
         tpl->InstanceTemplate()->SetHandler(namedConfig);
 
+		NODE_SET_PROTOTYPE_METHOD(tpl, "tryLockRead", TryLockRead);
+		NODE_SET_PROTOTYPE_METHOD(tpl, "lockRead", LockRead);
+		NODE_SET_PROTOTYPE_METHOD(tpl, "unlockRead", UnlockRead);
+		NODE_SET_PROTOTYPE_METHOD(tpl, "tryLockWrite", TryLockWrite);
+		NODE_SET_PROTOTYPE_METHOD(tpl, "lockWrite", LockWrite);
+		NODE_SET_PROTOTYPE_METHOD(tpl, "unlockWrite", UnlockWrite);
+
         SharedObject::tmplt.Reset(isolate, tpl);
         SharedObject::constructor.Reset(isolate, tpl->GetFunction());
         exports->Set(String::NewFromUtf8(isolate, "SharedObject"), tpl->GetFunction());
@@ -91,10 +98,6 @@ namespace sharedobj
         wrapper->weakRef.SetWeak<DestructWrapper>(wrapper, Destruct, WeakCallbackType::kParameter);
 
         args.GetReturnValue().Set(args.This());
-
-    }
-    void SharedObject::NewRef(SharedObject* obj, Isolate* targetIsolate)
-    {
 
     }
 
@@ -174,13 +177,45 @@ namespace sharedobj
 		info.GetReturnValue().Set(result);
     }
 
+	// Shared Synchronization
+	void SharedObject::TryLockRead(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+		SharedObject* self = reinterpret_cast<SharedObject*>(args.Holder()->GetAlignedPointerFromInternalField(0));
+		args.GetReturnValue().Set(self->TryLockRead());
+    }
+	void SharedObject::LockRead(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+		SharedObject* self = reinterpret_cast<SharedObject*>(args.Holder()->GetAlignedPointerFromInternalField(0));
+		self->LockRead();
+    }
+	void SharedObject::UnlockRead(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+		SharedObject* self = reinterpret_cast<SharedObject*>(args.Holder()->GetAlignedPointerFromInternalField(0));
+		self->UnlockRead();
+    }
+		 
+	void SharedObject::TryLockWrite(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+		SharedObject* self = reinterpret_cast<SharedObject*>(args.Holder()->GetAlignedPointerFromInternalField(0));
+		args.GetReturnValue().Set(self->TryLockWrite());
+    }
+	void SharedObject::LockWrite(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+		SharedObject* self = reinterpret_cast<SharedObject*>(args.Holder()->GetAlignedPointerFromInternalField(0));
+		self->LockWrite();
+    }
+	void SharedObject::UnlockWrite(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+		SharedObject* self = reinterpret_cast<SharedObject*>(args.Holder()->GetAlignedPointerFromInternalField(0));
+		self->UnlockWrite();
+    }
+
     Persistent<Function> SharedObject::constructor;
     Persistent<FunctionTemplate> SharedObject::tmplt;
     std::map<std::string, SharedObject*> SharedObject::shares;
 
 	SharedObject::SharedObject() : m_refcnt(0)
     {
-
     }
     int SharedObject::Attach()
     {
@@ -190,4 +225,30 @@ namespace sharedobj
     {
         return this->m_refcnt.fetch_sub(1);
     }
+
+	bool SharedObject::TryLockRead()
+	{
+		return this->m_syncLock.TryReadLock() == 0;
+	}
+	void SharedObject::LockRead()
+	{
+		this->m_syncLock.ReadLock();
+	}
+	void SharedObject::UnlockRead()
+	{
+		this->m_syncLock.ReadUnlock();
+	}
+
+	bool SharedObject::TryLockWrite()
+	{
+		return this->m_syncLock.TryWriteLock() == 0;
+	}
+	void SharedObject::LockWrite()
+	{
+		this->m_syncLock.WriteLock();
+	}
+	void SharedObject::UnlockWrite()
+	{
+		this->m_syncLock.ReadUnlock();
+	}
 }
