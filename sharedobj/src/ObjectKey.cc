@@ -18,18 +18,18 @@ namespace sharedobj
     }
     ObjectKey::ObjectKey(v8::Local<v8::Name>& from)
     {
-		this->m_isSymbol = from->IsSymbol() || from->IsSymbolObject();
-		if (this->m_isSymbol)
-		{
-			Local<Symbol> sym = Local<Symbol>::Cast(from);
-			String::Utf8Value uval(sym->Name()->ToString());
-			this->m_value = std::string(*uval);
-		}
-		else
-		{
-			String::Utf8Value uval(from->ToString());
-			this->m_value = std::string(*uval);
-		}
+        this->m_isSymbol = from->IsSymbol() || from->IsSymbolObject();
+        if (this->m_isSymbol)
+        {
+            Local<Symbol> sym = Local<Symbol>::Cast(from);
+            String::Utf8Value uval(sym->Name()->ToString());
+            this->m_value = std::string(*uval);
+        }
+        else
+        {
+            String::Utf8Value uval(from->ToString());
+            this->m_value = std::string(*uval);
+        }
         
     }
 

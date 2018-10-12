@@ -18,7 +18,7 @@ namespace sharedobj
         bool operator==(ObjectKey& other) const;
         bool operator==(v8::Local<v8::Value>& other) const;
 
-		bool operator<(const ObjectKey other) const;
+        bool operator<(const ObjectKey other) const;
 
         v8::Local<v8::Value> Get(v8::Isolate* isolate) const;
         std::string Get() const;

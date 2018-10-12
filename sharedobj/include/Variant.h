@@ -17,11 +17,11 @@ namespace sharedobj
         NumberObject,
     };
 
-	class Variant
-	{
+    class Variant
+    {
     private:
         static void SetValue(Variant* instance, v8::Local<v8::Value>& value);
-		
+        
     public:
         Variant();
         Variant(VariantType type);
@@ -39,7 +39,7 @@ namespace sharedobj
         std::string m_stringValue;
         double m_numberValue;
 
-	};
+    };
 }
 
 #endif
