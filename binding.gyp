@@ -32,7 +32,8 @@
                 # Shared Object type
                 'sharedobj/src/Variant.cc',
                 'sharedobj/src/SharedObject.cc',
-                
+                'sharedobj/src/ObjectKey.cc',
+
                 # Shared & Initialization
                 'src/main.cc',
                 'src/helpers.cc',
