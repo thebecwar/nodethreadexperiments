@@ -11,14 +11,13 @@
 
 namespace sharedobj
 {
-
+	
 	class SharedObject
 	{
 	public:
 		static void Init(v8::Local<v8::Object> exports);
 		static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
 		static void NewRef(SharedObject* obj, v8::Isolate* targetIsolate);
-        //static void Dtor(const v8::WeakCallbackInfo<SharedObject>& data);
 
 		static bool TypeCheck(v8::Local<v8::Value>& maybeSharedObject);
 
@@ -45,7 +44,7 @@ namespace sharedobj
 
 	private:
 		std::map<ObjectKey, Variant> m_properties;
-		libuv::threading::UVRwLock syncLock;
+		libuv::threading::UVRwLock m_syncLock;
         std::atomic<long> m_refcnt;
 	};
 }

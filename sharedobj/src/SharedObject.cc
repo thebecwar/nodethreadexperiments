@@ -3,6 +3,8 @@
 namespace sharedobj
 {
     using namespace v8;
+	using libuv::threading::UVReadLock;
+	using libuv::threading::UVWriteLock;
 
     void SharedObject::Init(Local<Object> exports)
     {
@@ -10,7 +12,7 @@ namespace sharedobj
         Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, SharedObject::New);
         
         tpl->SetClassName(String::NewFromUtf8(isolate, "SharedObject"));
-        tpl->InstanceTemplate()->SetInternalFieldCount(2);
+        tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
         NamedPropertyHandlerConfiguration namedConfig;
         namedConfig.getter = SharedObject::Get;
@@ -81,10 +83,8 @@ namespace sharedobj
 
         // Store a weak persistent ref to this object so we can track its lifetime
         Local<Object> jsThis = args.This();
-        //jsThis->SetAlignedPointerInInternalField(0, self);
-        jsThis->SetInternalField(0, External::New(isolate, self));
-        //jsThis->SetInternalField(1, External::New(isolate, (void*)refNum)); // Gives us a reference to the persistent for the callback.
-
+        jsThis->SetAlignedPointerInInternalField(0, self);
+        
         DestructWrapper* wrapper = new DestructWrapper();
         wrapper->share = self;
         wrapper->weakRef.Reset(isolate, jsThis);
@@ -97,22 +97,6 @@ namespace sharedobj
     {
 
     }
-    /*void SharedObject::Dtor(const WeakCallbackInfo<SharedObject>& data)
-    {
-        SharedObject* obj = reinterpret_cast<SharedObject*>(data.GetInternalField(0));
-        int refNum = (int)data.GetInternalField(1);
-
-        if (obj)
-        {
-            int refs = obj->Release();
-            if (refs <= 0)
-                delete obj;
-        }
-
-        
-        
-        data.GetIsolate()->AdjustAmountOfExternalAllocatedMemory(-10 * 1024 * 1024);
-    }*/
 
     bool SharedObject::TypeCheck(Local<Value>& maybeSharedObject)
     {
@@ -122,32 +106,79 @@ namespace sharedobj
     // Generic property handlers. (String & Symbol keys)
     void SharedObject::Get(Local<Name> property, const PropertyCallbackInfo<Value>& info)
     {
+		Isolate* isolate = info.GetIsolate();
+		SharedObject* self = reinterpret_cast<SharedObject*>(info.Holder()->GetAlignedPointerFromInternalField(0));
 
+		UVReadLock readLock(self->m_syncLock);
+
+		ObjectKey key(property);
+		if (self->m_properties.find(key) != self->m_properties.end())
+		{
+			info.GetReturnValue().Set(self->m_properties[key].Get(isolate));
+		}
+		else
+		{
+			info.GetReturnValue().Set(Undefined(isolate));
+		}
     }
     void SharedObject::Set(Local<Name> property, Local<Value> value, const PropertyCallbackInfo<Value>& info)
     {
+		Isolate* isolate = info.GetIsolate();
+		SharedObject* self = reinterpret_cast<SharedObject*>(info.Holder()->GetAlignedPointerFromInternalField(0));
 
+		UVWriteLock writeLock(self->m_syncLock);
+
+		ObjectKey key(property);
+		if (self->m_properties.find(key) == self->m_properties.end())
+		{
+			self->m_properties.emplace(key, Variant(value));
+		}
+		else
+		{
+			self->m_properties[key] = Variant(value);
+		}
     }
     void SharedObject::Query(Local<Name> property, const PropertyCallbackInfo<Integer>& info)
     {
-
+		info.GetReturnValue().Set(0);
     }
     void SharedObject::Deleter(Local<Name> property, const PropertyCallbackInfo<Boolean>& info)
     {
+		Isolate* isolate = info.GetIsolate();
+		SharedObject* self = reinterpret_cast<SharedObject*>(info.Holder()->GetAlignedPointerFromInternalField(0));
 
+		ObjectKey key(property);
+		if (self->m_properties.find(key) != self->m_properties.end())
+		{
+			UVWriteLock writeLock(self->m_syncLock);
+			self->m_properties.erase(key);
+			info.GetReturnValue().Set(true);
+		}
+		else
+		{
+			info.GetReturnValue().Set(false);
+		}
     }
     void SharedObject::Enumerator(const PropertyCallbackInfo<Array>& info)
     {
+		Isolate* isolate = info.GetIsolate();
+		SharedObject* self = reinterpret_cast<SharedObject*>(info.Holder()->GetAlignedPointerFromInternalField(0));
 
+		size_t count = self->m_properties.size();
+		Local<Array> result = Array::New(isolate, (int)count);
+		int i = 0;
+		for (auto iter = self->m_properties.begin(); iter != self->m_properties.end(); iter++)
+		{
+			result->Set(i++, iter->first.Get(isolate));
+		}
+		info.GetReturnValue().Set(result);
     }
 
     Persistent<Function> SharedObject::constructor;
     Persistent<FunctionTemplate> SharedObject::tmplt;
     std::map<std::string, SharedObject*> SharedObject::shares;
-    //std::map<int, v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>>> SharedObject::persistentHandles;
-    //std::atomic<int> SharedObject::refCount;
 
-    SharedObject::SharedObject()
+	SharedObject::SharedObject() : m_refcnt(0)
     {
 
     }
