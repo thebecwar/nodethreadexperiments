@@ -54,4 +54,17 @@ To tear down, go in the opposite order of construction with two caveats. (If you
 
 A handle scope is required before constructing a `v8::Local<>`. If you're calling into JS from within a callback registered with `uv_async_init`, you will need to create a `v8::HandleScope` using the isolate that you obtain from calling `v8::Isolate::GetCurrent()`. 
 
+### Symbols
 
+The native library for V8 doesn't expose any methods to determine if a symbol is in the named symbol repository, or for checking a symbol intependently of the isolate where it was created. Ideally, the implementation would assign a new UUID (or a unique internal name) for each new symbol it creates, and use that name internally within the API. That way, all symbols have a fixed reference. Some illustration of the problems:
+
+```
+// Javascript code:
+a = Symbol();
+b = Symbol();
+a === b; //Result -> false
+obj = { [a]: 'A', [b]: 'B' };
+console.log(obj) //Result -> { [Symbol()]: 'A', [Symbol()]: 'B' }
+```
+
+Since those symbols have no unique description, any C++ module that takes symbols as keys has to maintain a persistent reference to it. If we had a unique identifier, whether that's as simple as a `size_t` counter or as complex as a UUID string, we'd be able to store the data in an isolate agnostic way. (We'd still need a constructor for `v8::Symbol` that accepted the unique identifier.) If this was available, it would be possible to write a completely thread-safe JS object that can be accessed from multiple isolates independently and asynchronously.
