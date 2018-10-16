@@ -16,6 +16,7 @@ namespace threadpool
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
         NODE_SET_PROTOTYPE_METHOD(tpl, "queueItem", ThreadPool::QueueItem);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "queuePromise", ThreadPool::QueuePromise);
 
         tpl->InstanceTemplate()->SetAccessor(
             String::NewFromUtf8(isolate, "queueLength"),
@@ -71,6 +72,33 @@ namespace threadpool
         {
             UVLock lock(self->m_workMutex);
             JsWorkItem* item = ObjectWrap::Unwrap<JsWorkItem>(itemObject->ToObject());
+            self->m_workQueue.push(item);
+        }
+        else
+        {
+            args.GetIsolate()->ThrowException(Exception::SyntaxError(String::NewFromUtf8(args.GetIsolate(), "Need a WorkItem")));
+            return;
+        }
+    }
+    void ThreadPool::QueuePromise(const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
+        if (args.Length() == 0)
+        {
+            args.GetIsolate()->ThrowException(Exception::SyntaxError(String::NewFromUtf8(args.GetIsolate(), "Need a WorkItem")));
+            return;
+        }
+
+        ThreadPool* self = ObjectWrap::Unwrap<ThreadPool>(args.Holder());
+        Local<Value> itemObject = args[0];
+        if (JsWorkItem::TypeCheck(itemObject))
+        {
+            JsWorkItem* item = ObjectWrap::Unwrap<JsWorkItem>(itemObject->ToObject());
+            Local<Promise::Resolver> resolver = Promise::Resolver::New(args.GetIsolate());
+            item->SetPromise(args.GetIsolate(), resolver);
+
+            args.GetReturnValue().Set(resolver->GetPromise());
+
+            UVLock lock(self->m_workMutex);
             self->m_workQueue.push(item);
         }
         else

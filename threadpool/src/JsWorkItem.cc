@@ -158,24 +158,44 @@ namespace threadpool
 
     void JsWorkItem::ExecuteCallback(v8::Isolate* isolate)
     {
-        if (this->m_callbackFunction.IsEmpty()) return;
-
-        HandleScope handleScope(isolate);
-
-        int argc = (int)this->m_callbackArgs.size();
-        if (argc == 0)
+        if (!this->m_promiseResolver.IsEmpty())
         {
-            this->m_callbackFunction.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), 0, nullptr);
-        }
-        else
-        {
-            std::vector<Local<Value>> localArgs(argc);
-            for (int i = 0; i < argc; i++)
+            HandleScope handleScope(isolate);
+            Local<Promise::Resolver> resolver = this->m_promiseResolver.Get(isolate);
+            auto maybeLocalResult = JSON::Parse(isolate, String::NewFromUtf8(isolate, this->m_result.c_str()));
+            if (maybeLocalResult.IsEmpty())
             {
-                localArgs[i] = this->m_callbackArgs[i].Get(isolate);
+                resolver->Resolve(Undefined(isolate));
             }
-            this->m_callbackFunction.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), argc, &localArgs[0]);
+            else
+            {
+                resolver->Resolve(maybeLocalResult.ToLocalChecked());
+            }
         }
+        else if (!this->m_callbackFunction.IsEmpty())
+        {
+            HandleScope handleScope(isolate);
+
+            int argc = (int)this->m_callbackArgs.size();
+            if (argc == 0)
+            {
+                this->m_callbackFunction.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), 0, nullptr);
+            }
+            else
+            {
+                std::vector<Local<Value>> localArgs(argc);
+                for (int i = 0; i < argc; i++)
+                {
+                    localArgs[i] = this->m_callbackArgs[i].Get(isolate);
+                }
+                this->m_callbackFunction.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), argc, &localArgs[0]);
+            }
+        }
+    }
+
+    void JsWorkItem::SetPromise(Isolate* isolate, v8::Local<v8::Promise::Resolver>& resolver)
+    {
+        this->m_promiseResolver.Reset(isolate, resolver);
     }
 
     

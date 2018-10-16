@@ -38,6 +38,8 @@ namespace threadpool
         v8::Local<v8::Value> Execute(v8::Local<v8::Context>& context);
         void ExecuteCallback(v8::Isolate* isolate);
 
+        void SetPromise(v8::Isolate* isolate, v8::Local<v8::Promise::Resolver>& resolver);
+
     private:
         bool Compile(v8::Local<v8::Context>& context);
 
@@ -45,6 +47,7 @@ namespace threadpool
         std::string m_result;
         std::map<v8::Isolate*, v8::Persistent<v8::Script, v8::CopyablePersistentTraits<v8::Script>>> m_compiledScripts;
         v8::Persistent<v8::Function> m_callbackFunction;
+        v8::Persistent<v8::Promise::Resolver> m_promiseResolver;
         std::vector<v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>>> m_callbackArgs;
 
     };

@@ -24,6 +24,7 @@ namespace threadpool
 
 		// JS Methods
 		static void QueueItem(const v8::FunctionCallbackInfo<v8::Value>& args);
+        static void QueuePromise(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 		// JS Properties
 		static void GetQueuedItemCount(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value>& info);
