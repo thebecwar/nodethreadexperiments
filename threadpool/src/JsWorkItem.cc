@@ -124,13 +124,21 @@ namespace threadpool
         }
 
         Local<Script> script = this->m_compiledScripts[isolate].Get(isolate);
-        Local<Value> result = script->Run(context).ToLocalChecked();
 
-        Local<String> serializedResult = JSON::Stringify(context, result->ToObject()).ToLocalChecked();
-        String::Utf8Value tmp(serializedResult);
-        this->m_result = std::string(*tmp);
+        MaybeLocal<Value> maybeResult = script->Run(context);
 
-        return result;
+        if (!maybeResult.IsEmpty())
+        {
+            Local<Value> result = maybeResult.ToLocalChecked();
+            Local<String> serializedResult = JSON::Stringify(context, result->ToObject()).ToLocalChecked();
+            String::Utf8Value tmp(serializedResult);
+            this->m_result = std::string(*tmp);
+            return result;
+        }
+        else
+        {
+            return Undefined(context->GetIsolate());
+        }
     }
 
     bool JsWorkItem::Compile(Local<Context>& context)
