@@ -1,6 +1,7 @@
 
 #include <node.h>
 
+#include <Helpers.h>
 #include <JsWorkItem.h>
 #include <ThreadPool.h>
 #include <SharedObject.h>
@@ -10,6 +11,8 @@ using v8::Object;
 
 void InitAll(Local<Object> exports)
 {
+    Helpers_Init(exports);
+
     threadpool::JsWorkItem::Init(exports);
     threadpool::ThreadPool::Init(exports);
 
