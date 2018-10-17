@@ -20,6 +20,7 @@
                 'libuv/src/UVMutex.cc',
                 'libuv/src/UVRwLock.cc',
                 'libuv/src/UVSemaphore.cc',
+                'libuv/src/UVSharedLib.cc',
                 'libuv/src/UVThread.cc',
                 'libuv/src/UVTimer.cc',
                 'libuv/src/UVTls.cc',
