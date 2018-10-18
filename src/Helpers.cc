@@ -7,6 +7,12 @@
 
 typedef DWORD pid_t;
 
+#else
+
+#include <strings.h>
+#define stricmp strcasecmp
+
+
 #endif
 
 #include <vector>

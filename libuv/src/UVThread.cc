@@ -1,5 +1,10 @@
 #include "UVThread.h"
 
+#ifndef WIN32
+#include <cstring>
+using std::memcpy;
+#endif
+
 namespace libuv
 {
 namespace threading 

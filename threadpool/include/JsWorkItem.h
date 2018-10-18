@@ -28,7 +28,7 @@ namespace threadpool
 
     private:
         static v8::Persistent<v8::Function> constructor;
-        static v8::Persistent<v8::FunctionTemplate> JsWorkItem::tmplt;
+        static v8::Persistent<v8::FunctionTemplate> tmplt;
 
     // Internal Methods
     public:

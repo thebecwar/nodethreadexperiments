@@ -1,5 +1,9 @@
 #include "Variant.h"
 
+#ifndef WIN32
+#include <math.h> // For NaN constant
+#endif
+
 namespace sharedobj
 {
     void Variant::SetValue(Variant* instance, v8::Local<v8::Value>& value)

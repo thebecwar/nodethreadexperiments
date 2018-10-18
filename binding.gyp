@@ -11,6 +11,7 @@
         {
             'target_name': 'experiments',
             'include_dirs': [ 'libuv/include', 'threadpool/include', 'sharedobj/include', 'include' ],
+            'cflags_cc': [ '-std=c++17', ], # ignored by MSVS
             'sources': [
                 # libuv wrapper classes
                 'libuv/src/UVAsync.cc',
@@ -37,7 +38,7 @@
 
                 # Shared & Initialization
                 'src/main.cc',
-                'src/helpers.cc',
+                'src/Helpers.cc',
                 ],
         }
     ]
