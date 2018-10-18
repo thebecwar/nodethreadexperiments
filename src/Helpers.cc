@@ -7,11 +7,14 @@
 
 typedef DWORD pid_t;
 
+#elif defined(MACOS)
+
 #else
 
 #include <strings.h>
 #define stricmp strcasecmp
 
+#include <dirent.h>
 
 #endif
 
@@ -246,6 +249,19 @@ void GetChildProcessIds(const FunctionCallbackInfo<Value>& args)
 
 #else
     // Posix todo
+    DIR* proc = opendir("/proc");
+    
+    dirent* ent = readdir(proc);
+    do
+    {
+        pid_t pid;
+        sscanf(ent->d_name, "%d", &pid);
+        children.emplace_back(pid);
+
+    } while ((ent = readdir(proc)) != nullptr);
+
+
+
 #endif
 
     Local<Array> result = Array::New(isolate, children.size());
