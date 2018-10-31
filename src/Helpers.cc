@@ -15,6 +15,85 @@ typedef DWORD pid_t;
 #define stricmp strcasecmp
 
 #include <dirent.h>
+#include <fstream>
+#include <string>
+#include <sstream>
+
+typedef struct {
+    pid_t pid;
+    char exName[_POSIX_PATH_MAX];
+    char state;
+    unsigned int euid;
+    unsigned int egid;
+    pid_t ppid;
+    int pgrp;
+    int session;
+    int tty;
+    int tpgid;
+    unsigned int flags;
+    unsigned int minflt;
+    unsigned int cminflt;
+    unsigned int majflt;
+    unsigned int cmajflt;
+    int utime;
+    int stime;
+    int cutime;
+    int cstime;
+    int counter;
+    int priority;
+    unsigned int timeout;
+} linux_procinfo_t;
+
+void linux_getprocinfo(pid_t pid, linux_procinfo_t& info)
+{
+    std::stringstream fn;
+    fn << "/proc/" << pid << "/stat";
+    std::ifstream ifs(fn.str());
+    
+    ifs >> info.pid;
+
+    int c;
+    while (!ifs.eof() && c != '(')
+    {
+        c = ifs.get();
+    }
+
+    for (int i = 0; i < _POSIX_PATH_MAX; i++)
+    {
+        if (c == ')')
+        {
+            info.exName[i] = '\0';
+        }
+        else
+        {
+            c = ifs.get();
+            if (c == ')')
+                info.exName[i] = '\0';
+            else
+                info.exName[i] = c;
+        }
+    }
+    ifs.get(); // trash space after closing paren
+
+    ifs >> info.state;
+    ifs >> info.ppid;
+    ifs >> info.pgrp;
+    ifs >> info.session;
+    ifs >> info.tty;
+    ifs >> info.tpgid;
+    ifs >> info.flags;
+    ifs >> info.minflt;
+    ifs >> info.cminflt;
+    ifs >> info.majflt;
+    ifs >> info.cmajflt;
+    ifs >> info.utime;
+    ifs >> info.stime;
+    ifs >> info.cutime;
+    ifs >> info.cstime;
+    ifs >> info.counter;
+    ifs >> info.priority;
+    
+}
 
 #endif
 
@@ -33,168 +112,168 @@ int GetSignal(Local<String>& str)
 {
     String::Utf8Value val(str);
 
-#ifdef SIGHUP
-    BAD_IDEA_MACRO(SIGHUP)
-#endif
+    #ifdef SIGHUP
+        BAD_IDEA_MACRO(SIGHUP)
+    #endif
 
-#ifdef SIGHUP
-        BAD_IDEA_MACRO(SIGHUP);
-#endif
+    #ifdef SIGHUP
+            BAD_IDEA_MACRO(SIGHUP);
+    #endif
 
-#ifdef SIGINT
-    BAD_IDEA_MACRO(SIGINT);
-#endif
+    #ifdef SIGINT
+        BAD_IDEA_MACRO(SIGINT);
+    #endif
 
-#ifdef SIGQUIT
-    BAD_IDEA_MACRO(SIGQUIT);
-#endif
+    #ifdef SIGQUIT
+        BAD_IDEA_MACRO(SIGQUIT);
+    #endif
 
-#ifdef SIGILL
-    BAD_IDEA_MACRO(SIGILL);
-#endif
+    #ifdef SIGILL
+        BAD_IDEA_MACRO(SIGILL);
+    #endif
 
-#ifdef SIGTRAP
-    BAD_IDEA_MACRO(SIGTRAP);
-#endif
+    #ifdef SIGTRAP
+        BAD_IDEA_MACRO(SIGTRAP);
+    #endif
 
-#ifdef SIGABRT
-    BAD_IDEA_MACRO(SIGABRT);
-#endif
+    #ifdef SIGABRT
+        BAD_IDEA_MACRO(SIGABRT);
+    #endif
 
-#ifdef SIGIOT
-# if SIGABRT != SIGIOT
-    BAD_IDEA_MACRO(SIGIOT);
-# endif
-#endif
+    #ifdef SIGIOT
+    # if SIGABRT != SIGIOT
+        BAD_IDEA_MACRO(SIGIOT);
+    # endif
+    #endif
 
-#ifdef SIGBUS
-    BAD_IDEA_MACRO(SIGBUS);
-#endif
+    #ifdef SIGBUS
+        BAD_IDEA_MACRO(SIGBUS);
+    #endif
 
-#ifdef SIGFPE
-    BAD_IDEA_MACRO(SIGFPE);
-#endif
+    #ifdef SIGFPE
+        BAD_IDEA_MACRO(SIGFPE);
+    #endif
 
-#ifdef SIGKILL
-    BAD_IDEA_MACRO(SIGKILL);
-#endif
+    #ifdef SIGKILL
+        BAD_IDEA_MACRO(SIGKILL);
+    #endif
 
-#ifdef SIGUSR1
-    BAD_IDEA_MACRO(SIGUSR1);
-#endif
+    #ifdef SIGUSR1
+        BAD_IDEA_MACRO(SIGUSR1);
+    #endif
 
-#ifdef SIGSEGV
-    BAD_IDEA_MACRO(SIGSEGV);
-#endif
+    #ifdef SIGSEGV
+        BAD_IDEA_MACRO(SIGSEGV);
+    #endif
 
-#ifdef SIGUSR2
-    BAD_IDEA_MACRO(SIGUSR2);
-#endif
+    #ifdef SIGUSR2
+        BAD_IDEA_MACRO(SIGUSR2);
+    #endif
 
-#ifdef SIGPIPE
-    BAD_IDEA_MACRO(SIGPIPE);
-#endif
+    #ifdef SIGPIPE
+        BAD_IDEA_MACRO(SIGPIPE);
+    #endif
 
-#ifdef SIGALRM
-    BAD_IDEA_MACRO(SIGALRM);
-#endif
+    #ifdef SIGALRM
+        BAD_IDEA_MACRO(SIGALRM);
+    #endif
 
-    BAD_IDEA_MACRO(SIGTERM);
+        BAD_IDEA_MACRO(SIGTERM);
 
-#ifdef SIGCHLD
-    BAD_IDEA_MACRO(SIGCHLD);
-#endif
+    #ifdef SIGCHLD
+        BAD_IDEA_MACRO(SIGCHLD);
+    #endif
 
-#ifdef SIGSTKFLT
-    BAD_IDEA_MACRO(SIGSTKFLT);
-#endif
+    #ifdef SIGSTKFLT
+        BAD_IDEA_MACRO(SIGSTKFLT);
+    #endif
 
 
-#ifdef SIGCONT
-    BAD_IDEA_MACRO(SIGCONT);
-#endif
+    #ifdef SIGCONT
+        BAD_IDEA_MACRO(SIGCONT);
+    #endif
 
-#ifdef SIGSTOP
-    BAD_IDEA_MACRO(SIGSTOP);
-#endif
+    #ifdef SIGSTOP
+        BAD_IDEA_MACRO(SIGSTOP);
+    #endif
 
-#ifdef SIGTSTP
-    BAD_IDEA_MACRO(SIGTSTP);
-#endif
+    #ifdef SIGTSTP
+        BAD_IDEA_MACRO(SIGTSTP);
+    #endif
 
-#ifdef SIGBREAK
-    BAD_IDEA_MACRO(SIGBREAK);
-#endif
+    #ifdef SIGBREAK
+        BAD_IDEA_MACRO(SIGBREAK);
+    #endif
 
-#ifdef SIGTTIN
-    BAD_IDEA_MACRO(SIGTTIN);
-#endif
+    #ifdef SIGTTIN
+        BAD_IDEA_MACRO(SIGTTIN);
+    #endif
 
-#ifdef SIGTTOU
-    BAD_IDEA_MACRO(SIGTTOU);
-#endif
+    #ifdef SIGTTOU
+        BAD_IDEA_MACRO(SIGTTOU);
+    #endif
 
-#ifdef SIGURG
-    BAD_IDEA_MACRO(SIGURG);
-#endif
+    #ifdef SIGURG
+        BAD_IDEA_MACRO(SIGURG);
+    #endif
 
-#ifdef SIGXCPU
-    BAD_IDEA_MACRO(SIGXCPU);
-#endif
+    #ifdef SIGXCPU
+        BAD_IDEA_MACRO(SIGXCPU);
+    #endif
 
-#ifdef SIGXFSZ
-    BAD_IDEA_MACRO(SIGXFSZ);
-#endif
+    #ifdef SIGXFSZ
+        BAD_IDEA_MACRO(SIGXFSZ);
+    #endif
 
-#ifdef SIGVTALRM
-    BAD_IDEA_MACRO(SIGVTALRM);
-#endif
+    #ifdef SIGVTALRM
+        BAD_IDEA_MACRO(SIGVTALRM);
+    #endif
 
-#ifdef SIGPROF
-    BAD_IDEA_MACRO(SIGPROF);
-#endif
+    #ifdef SIGPROF
+        BAD_IDEA_MACRO(SIGPROF);
+    #endif
 
-#ifdef SIGWINCH
-    BAD_IDEA_MACRO(SIGWINCH);
-#endif
+    #ifdef SIGWINCH
+        BAD_IDEA_MACRO(SIGWINCH);
+    #endif
 
-#ifdef SIGIO
-    BAD_IDEA_MACRO(SIGIO);
-#endif
+    #ifdef SIGIO
+        BAD_IDEA_MACRO(SIGIO);
+    #endif
 
-#ifdef SIGPOLL
-# if SIGPOLL != SIGIO
-    BAD_IDEA_MACRO(SIGPOLL);
-# endif
-#endif
+    #ifdef SIGPOLL
+    # if SIGPOLL != SIGIO
+        BAD_IDEA_MACRO(SIGPOLL);
+    # endif
+    #endif
 
-#ifdef SIGLOST
-# if SIGLOST != SIGABRT
-    BAD_IDEA_MACRO(SIGLOST);
-# endif
-#endif
+    #ifdef SIGLOST
+    # if SIGLOST != SIGABRT
+        BAD_IDEA_MACRO(SIGLOST);
+    # endif
+    #endif
 
-#ifdef SIGPWR
-# if SIGPWR != SIGLOST
-    BAD_IDEA_MACRO(SIGPWR);
-# endif
-#endif
+    #ifdef SIGPWR
+    # if SIGPWR != SIGLOST
+        BAD_IDEA_MACRO(SIGPWR);
+    # endif
+    #endif
 
-#ifdef SIGINFO
-# if !defined(SIGPWR) || SIGINFO != SIGPWR
-    BAD_IDEA_MACRO(SIGINFO);
-# endif
-#endif
+    #ifdef SIGINFO
+    # if !defined(SIGPWR) || SIGINFO != SIGPWR
+        BAD_IDEA_MACRO(SIGINFO);
+    # endif
+    #endif
 
-#ifdef SIGSYS
-    BAD_IDEA_MACRO(SIGSYS);
-#endif
+    #ifdef SIGSYS
+        BAD_IDEA_MACRO(SIGSYS);
+    #endif
 
-#ifdef SIGTERM
-    return SIGTERM;
-#else
-    return 0;
-#endif
+    #ifdef SIGTERM
+        return SIGTERM;
+    #else
+        return 0;
+    #endif
 }
 
 void GetChildProcessIds(const FunctionCallbackInfo<Value>& args)
@@ -549,6 +628,17 @@ void GetProcessInfo(const FunctionCallbackInfo<Value>& args)
 
 
 #else
+
+    if (searchPid)
+    {
+        linux_procinfo_t procInfo = {};
+        linux_getprocinfo(pid, procInfo);
+        Local<Object> current = Local<Object>::Cast(result);
+        current->Set(pidKey, Integer::New(isolate, pid));
+        current->Set(ppidKey, Integer::New(isolate, procInfo.ppid));
+        current->Set(exeNameKey, String::NewFromUtf8(isolate, procInfo.exName));
+
+    }
 
 #endif
 
