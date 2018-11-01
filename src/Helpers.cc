@@ -95,6 +95,26 @@ void linux_getprocinfo(pid_t pid, linux_procinfo_t& info)
     
 }
 
+void linux_snapprocs(std::vector<linux_procinfo_t>& info)
+{
+    DIR* procDir = opendir("/proc");
+    
+    dirent* ent;
+    pid_t current = -1;
+    while (ent = readdir(procDir))
+    {
+        std::stringstream ss(ent->d_name);
+        ss >> current;
+        if (!ss.fail())
+        {
+            linux_procinfo_t pinfo;
+            linux_getprocinfo(current, pinfo);
+            info.emplace_back(pinfo);
+        }
+    }
+    closedir(procDir);
+}
+
 #endif
 
 #include <vector>
@@ -328,19 +348,15 @@ void GetChildProcessIds(const FunctionCallbackInfo<Value>& args)
 
 #else
     // Posix todo
-    DIR* proc = opendir("/proc");
-    
-    dirent* ent = readdir(proc);
-    do
+    std::vector<linux_procinfo_t> procInfo;
+    linux_snapprocs(procInfo);
+    for (auto iter = procInfo.begin(); iter != procInfo.end(); iter++)
     {
-        pid_t pid;
-        sscanf(ent->d_name, "%d", &pid);
-        children.emplace_back(pid);
-
-    } while ((ent = readdir(proc)) != nullptr);
-
-
-
+        if (iter->ppid == currentProc)
+        {
+            children.emplace_back(iter->pid);
+        }
+    }
 #endif
 
     Local<Array> result = Array::New(isolate, children.size());
@@ -637,7 +653,45 @@ void GetProcessInfo(const FunctionCallbackInfo<Value>& args)
         current->Set(pidKey, Integer::New(isolate, pid));
         current->Set(ppidKey, Integer::New(isolate, procInfo.ppid));
         current->Set(exeNameKey, String::NewFromUtf8(isolate, procInfo.exName));
+    }
+    else
+    {
+        // we aren't searching by PID
+        std::vector<linux_procinfo_t> processes;
+        linux_snapprocs(processes);
+        bool found = false;
+        for (auto iter = processes.begin(); iter != processes.end(); iter++)
+        {
+            Local<Object> current;
+            if (enumAll)
+            {
+                current = Object::New(isolate);
+            }
+            else
+            {
+                current = Local<Object>::Cast(result);
+            }
 
+            if (enumAll ||
+                stricmp(procName.c_str(), iter->exName) == 0)
+            {
+                found = true;
+                current->Set(pidKey, Integer::NewFromUnsigned(isolate, iter->pid));
+                current->Set(ppidKey, Integer::NewFromUnsigned(isolate, iter->ppid));
+                current->Set(exeNameKey, String::NewFromUtf8(isolate, iter->exName));
+            }
+
+            if (enumAll)
+            {
+                Local<Array> arr = Local<Array>::Cast(result);
+                arr->Set(arr->Length(), current);
+            }
+            else
+            {
+                if (found)
+                    break;
+            }
+        }
     }
 
 #endif
